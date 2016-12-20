@@ -1,24 +1,12 @@
-FROM centos:centos7
+FROM debian:8.1
 
-RUN yum update -y && \
-yum install -y wget  && \
-yum install -y epel-release && \
-yum install -y java-1.7.0-openjdk && \
-yum install -y daemonize && \
-yum clean all
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get -qq update && apt-get -qq -y upgrade && apt-get -qq -y install default-jdk curl
+ENV JAVA_HOME /usr/lib/jvm/default-java/jre
 
+## 5555 - Riemann TCP and UDP; 5556 - Riemann websocket
+EXPOSE 5555 5555/udp 5556
+CMD ["/usr/bin/riemann"]
 
-RUN wget https://aphyr.com/riemann/riemann-0.2.11-1.noarch.rpm
-
-RUN  rpm -Uvh riemann-0.2.11-1.noarch.rpm
-
-
-COPY riemann.config /etc/riemann/
-
-# Expose the ports for inbound events and websockets
-
-EXPOSE 5555
-EXPOSE 5555/udp
-EXPOSE 5556
-
-CMD ["/bin/riemann","/etc/riemann/riemann.config"]
+RUN curl -so /tmp/riemann.deb https://aphyr.com/riemann/riemann_0.2.10_all.deb && dpkg -i /tmp/riemann.deb && rm -f /tmp/riemann.deb
+ADD riemann.config /etc/riemann/
